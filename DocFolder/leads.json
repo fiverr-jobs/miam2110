@@ -1,0 +1,159 @@
+
+{
+    "id": 7284760,
+    "product": {
+        "id": 21,
+        "identifier": "NB",
+        "shortName": "SACH",
+        "shortParentShortName": "SACH (NEUBAU)",
+        "name": "Gebäudeneubauversicherung"
+    },
+    "status": {
+        "id": 50,
+        "name": "Verkauft"
+    },
+    "createdAt": {
+        "date": "2022-03-02 13:12:56.000000",
+        "timezone_type": 3,
+        "timezone": "Europe/Berlin"
+    },
+    "updatedAt": {
+        "date": "2022-03-02 13:13:04.000000",
+        "timezone_type": 3,
+        "timezone": "Europe/Berlin"
+    },
+    "saleId": 5244307,
+    "soldAt": {
+        "date": "2022-03-02 14:33:21.000000",
+        "timezone_type": 3,
+        "timezone": "Europe/Berlin"
+    },
+    "processStatus": null,
+    "proofCampaignId": null,
+    "isCancelable": true,
+    "isCancelableTill": {
+        "date": "2022-03-23 14:33:21.000000",
+        "timezone_type": 3,
+        "timezone": "Europe/Berlin"
+    },
+    "cancellationRejectCosts": 10,
+    "isFreeLead": false,
+    "automaticAdviserSelection": true,
+    "isCrossSelling": false,
+    "productChanged": null,
+    "manualReleasedLead": false,
+    "releasedByPreQualification": false,
+    "releasedByPreQualificationData": null,
+    "cmsContentType": "tariffCalcGwt",
+    "data": {
+        "Tarifgesellschaft": "Asspario",
+        "Tarifname": "fair select",
+        "angezeigter Beitrag": "139,23 €",
+        "BH-Haftpflicht VS": "5 Mio. €",
+        "Bauleistung SB": "0,00 €",
+        "Tarifanzahl": "24",
+        "BH-Haftpflicht": "ja",
+        "Bauleistung": "nein",
+        "Art des Baus": "Altbau/Sanierung",
+        "Wohnfläche": "290 m²",
+        "Neubausumme": "900.000,00 €",
+        "Bauzeit": "bis 1 Jahr",
+        "Fertigteilhaus": "Nein",
+        "Bauartklasse": "massive Bauweise mit harter Dachung (BAK I)",
+        "Denkmalschutz": "Nein"
+    },
+    "affiliateSite": {
+        "id": null,
+        "name": "",
+        "affiliateBlacklistIsEligible": true,
+        "affiliateBlacklistExists": false,
+        "siteKey": "httpwwwtestsiegerberichtede",
+        "url": "http://www.testsieger-berichte.de"
+    },
+    "invoice": {
+        "amount": 18.9,
+        "netAmount": 18.9,
+        "invoiceAt": "2022-03-02",
+        "description": ""
+    },
+    "reductions": [],
+    "customer": {
+        "contact": {
+            "sex": 2,
+            "firstName": "Nadja",
+            "lastName": "Paul",
+            "company": ""
+        },
+        "phone": "01772316023",
+        "email": "nadja.paul@easy-slides.com",
+        "street": "Wasgenstr. 61a",
+        "postalCode": "14129",
+        "postalArea": {
+            "region1": "Berlin"
+        },
+        "city": "Berlin",
+        "dateOfBirth": "1979-02-23",
+        "occupationGroup": {
+            "id": 1,
+            "name": "Angestellte(r)"
+        }
+    },
+    "numOfPendingCancellations": 0,
+    "notes": [
+        {
+            "createdAt": {
+                "date": "2022-03-02 13:13:04.000000",
+                "timezone_type": 3,
+                "timezone": "Europe/Berlin"
+            },
+            "author": "system",
+            "subject": "Adresscheck bestanden",
+            "content": "Ergebnis: bestanden\nValidierungsstatus: AV24"
+        },
+        {
+            "createdAt": {
+                "date": "2022-03-02 13:13:03.000000",
+                "timezone_type": 3,
+                "timezone": "Europe/Berlin"
+            },
+            "author": "system",
+            "subject": "E-Mail-Adress Prüfung bestanden.",
+            "content": ""
+        },
+        {
+            "createdAt": {
+                "date": "2022-03-02 13:13:03.000000",
+                "timezone_type": 3,
+                "timezone": "Europe/Berlin"
+            },
+            "author": "system",
+            "subject": "Kundenkontakt Namens-Prüfung bestanden."
+        },
+        {
+            "createdAt": {
+                "date": "2022-03-02 13:13:03.000000",
+                "timezone_type": 3,
+                "timezone": "Europe/Berlin"
+            },
+            "author": "system",
+            "subject": "Telefonnummer-Prüfung bestanden."
+        },
+        {
+            "createdAt": {
+                "date": "2022-03-02 13:13:03.000000",
+                "timezone_type": 3,
+                "timezone": "Europe/Berlin"
+            },
+            "author": "system",
+            "subject": "Phone-Ping Mobilnummer Prüfung bestanden",
+            "content": "Status: Delivered\nText: Live\nCode: 0\nNumber: 491772316023\nType: Mobile"
+        }
+    ],
+    "isRead": true,
+    "customerMailExists": true,
+    "isRateable": true,
+    "customerCanRateProofAdviser": true,
+    "customerUnableRateProofAdviserReason": null,
+    "customerReviewRequestMail": null,
+    "customerReview": null
+}
