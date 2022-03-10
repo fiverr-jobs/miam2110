@@ -1,0 +1,869 @@
+
+import math
+import base64
+from collections import OrderedDict
+#---------------------------------
+# kalkicode.com 
+# These methods have not been changed by our tools.
+# parse_url
+# fsockopen
+# urlencode
+# http_build_query
+# implode
+# fwrite
+# feof
+# fread
+# explode
+# unserialize
+# preg_split
+# pack
+# hash_hmac
+#----------------------------
+
+
+#---------------------------------
+# kalkicode.com (Useful modifier code that might be useful to you).
+"""
+# open file with read mod
+file = open('location/file.txt', 'r')
+# reading text file data of line by line 
+for data in file:
+    print (data)
+"""
+#----------------------------
+
+#*
+# * Klick-Tipp REST connector
+# * @author Klick-tipp Ltd.
+# * @version 3.3.1
+# *
+# * Classes providing connections with the Klick-tipp REST server.
+# 
+
+#
+#
+#KlicktippConnector
+#A class using session authentication for api access.
+#
+#Example: Login, subscribe, update, unsubscribe, delete, logout.
+#
+#require ("klicktipp.api.inc"); // this file
+#
+#$connector = new KlicktippConnector(); 
+#$result = $connector->login('username', 'password');
+#$subscriber = $connector->subscribe('example@example.com');
+#$result = $connector->subscriber_update($subscriber->id, array('fieldFirstName' => 'John'));
+#$result = $connector->unsubscribe('example@example.com');
+#$result = $connector->subscriber_delete($subscriber->id);
+#$connector->logout();
+#
+
+class KlicktippConnector :
+    host = None;
+    port = None;
+    path = None;
+    sessionId = None;
+    sessionName = None;
+    error = None;
+    #*
+        # * Instantiates a KlicktippConnector
+        # * The service URL will be tested: use get_last_error for any errors detected.
+        # *
+        # * @param string $service (optional) Path to the REST server
+        # *
+        # * @return the connector object
+        # 
+        
+    def __init__(this,service = 'https://api.klicktipp.com') :
+        uri = parse_url(service);
+        if (uri == FALSE) :
+            this.error = 'Invalid Constructor Arguments';
+            return;
+        
+        if (not isset(uri['scheme'])) :
+            this.error = 'Invalid Constructor Arguments';
+            return;
+        
+        if (uri['scheme'] == 'http') :
+            port = 80;
+        elif (uri['scheme'] == 'https') :
+            # Note: Only works for PHP 4.3 compiled with OpenSSL.
+            port = 443;
+        else :
+            this.error = 'Invalid Constructor Arguments';
+            return;
+        host = uri['host'];
+        # Make sure the socket opens properly.
+        fp = @fsockopen( 'ssl://' + str(host) if port == 443 else host, port, errno, errstr, 20);
+        if (not fp) :
+            this.error = str(str('Connection Error: ' + str(errno)) + ' ') + errstr.strip();
+            return;
+        
+        fp.close();
+        this.port = port;
+        this.host = host;
+        this.path =  uri['path'] if isset(uri['path']) else '';
+    
+    #*
+        # * Get last error
+        # *
+        # * @return string an error description of the last error
+        # 
+        
+    def get_last_error(this) :
+        last_error =  '' if empty(this.error) else this.error;
+        unset(this.error);
+        # reset
+        return last_error;
+    
+    #*
+        # * login
+        # *
+        # * @param mixed $username The login name of the user to login.
+        # * @param mixed $password The password of the user.
+        # * @return TRUE on success
+        # 
+        
+    def login(this,username, password) :
+        if (empty(username) or empty(password)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # Login
+        data = OrderedDict([('username',username),('password',password)]);
+        response = this._http_request('/account/login', 'POST', data, FALSE);
+        if (empty(response.error)) :
+            if (isset(response.data)) :
+                if (isset(response.data.sessid)) :
+                    this.sessionId = response.data.sessid;
+                    this.sessionName = response.data.session_name;
+                
+            
+            return TRUE;
+        else : 
+            this.error = 'Login failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Logs out the user currently logged in.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def logout(this) :
+        response = this._http_request('/account/logout', 'POST');
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Logout failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get all subscription processes (lists) of the logged in user. Requires to be logged in.
+        # *
+        # * @return A associative array <list id> => <list name>
+        # 
+        
+    def subscription_process_index(this) :
+        response = this._http_request('/list');
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscription process index failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get subscription process (list) definition. Requires to be logged in.
+        # *
+        # * @param mixed $listid The id of the subscription process
+        # *
+        # * @return An object representing the Klicktipp subscription process.
+        # 
+        
+    def subscription_process_get(this,listid) :
+        if (not listid) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # retrieve
+        response = this._http_request('/list/' + urlencode(listid));
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscription process get failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get subscription process (list) redirection url for given subscription.
+        # *
+        # * @param mixed $listid The id of the subscription process.
+        # * @param mixed $email The email address of the subscriber.
+        # *
+        # * @return A redirection url as defined in the subscription process.
+        # 
+        
+    def subscription_process_redirect(this,listid, email) :
+        if (empty(listid) or empty(email)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # update
+        data = OrderedDict([('listid',listid),('email',email)]);
+        response = this._http_request('/list/redirect', 'POST', data);
+        if (empty(response.error)) :
+            return  '' if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscription process get redirection url failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get all manual tags of the logged in user. Requires to be logged in.
+        # *
+        # * @return A associative array <tag id> => <tag name>
+        # 
+        
+    def tag_index(this) :
+        response = this._http_request('/tag');
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Tag index failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get a tag definition. Requires to be logged in.
+        # *
+        # * @param mixed $tagid The tag id.
+        # *
+        # * @return An object representing the Klicktipp tag object.
+        # 
+        
+    def tag_get(this,tagid) :
+        if (not tagid) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # retrieve
+        response = this._http_request('/tag/' + urlencode(tagid));
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Tag get failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Create a new manual tag. Requires to be logged in.
+        # *
+        # * @param string $name The name of the tag.
+        # * @param mixed $text (optional) An additional description of the tag.
+        # *
+        # * @return mixed The id of the newly created tag.
+        # 
+        
+    def tag_create(this,name, text = '') :
+        if (empty(name)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # create tag
+        data = OrderedDict([('name',name)]);
+        if (not empty(text)) :
+            data['text'] = text;
+        
+        response = this._http_request('/tag', 'POST', data);
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Tag creation failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Updates a tag. Requires to be logged in.
+        # *
+        # * @param mixed $tagid The tag id used to identify which tag to modify.
+        # * @param mixed $name (optional) The new tag name. Set empty to leave it unchanged.
+        # * @param mixed $text (optional) The new tag description. Set empty to leave it unchanged.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def tag_update(this,tagid, name = '', text = '') :
+        if (empty(tagid) or empty(name) and empty(text)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # update tag
+        data = OrderedDict([]);
+        if (not empty(name)) :
+            data['name'] = name;
+        
+        if (not empty(text)) :
+            data['text'] = text;
+        
+        response = this._http_request('/tag/' + urlencode(tagid), 'PUT', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Tag update failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Deletes a tag. Requires to be logged in.
+        # *
+        # * @param mixed $tagid The user id of the user to delete.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def tag_delete(this,tagid) :
+        if (empty(tagid)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # delete tag
+        response = this._http_request('/tag/' + urlencode(tagid), 'DELETE');
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Tag deletion failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #//////////////////////////////////
+    #*
+        # * Get all contact fields of the logged in user. Requires to be logged in.
+        # *
+        # * @return A associative array <field id> => <field name>
+        # 
+        
+    def field_index(this) :
+        response = this._http_request('/field');
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Field index failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Subscribe an email. Requires to be logged in.
+        # *
+        # * @param mixed $email The email address of the subscriber.
+        # * @param mixed $listid (optional) The id subscription process.
+        # * @param mixed $tagid (optional) The id of the manual tag the subscriber will be tagged with.
+        # * @param mixed $fields (optional) Additional fields of the subscriber.
+        # *
+        # * @return An object representing the Klicktipp subscriber object.
+        # 
+        
+    def subscribe(this,email, listid = 0, tagid = 0, fields = OrderedDict([]), smsnumber = '') :
+        if (empty(email) and empty(smsnumber)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # subscribe
+        data = OrderedDict([('email',email)]);
+        if (not empty(smsnumber)) :
+            data['smsnumber'] = smsnumber;
+        
+        if (not empty(listid)) :
+            data['listid'] = listid;
+        
+        if (not empty(tagid)) :
+            data['tagid'] = tagid;
+        
+        if (not empty(fields)) :
+            data['fields'] = fields;
+        
+        response = this._http_request('/subscriber', 'POST', data);
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscription failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Unsubscribe an email. Requires to be logged in.
+        # *
+        # * @param mixed $email The email address of the subscriber.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def unsubscribe(this,email) :
+        if (empty(email)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # unsubscribe
+        data = OrderedDict([('email',email)]);
+        response = this._http_request('/subscriber/unsubscribe', 'POST', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Unsubscription failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Tag an email. Requires to be logged in.
+        # *
+        # * @param mixed $email The email address of the subscriber.
+        # * @param mixed $tagids The id (or an array) of the manual tag(s) the subscriber will be tagged with.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def tag(this,email, tagids) :
+        if (empty(email) or empty(tagids)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # make an array
+        if ((type(tagids) == int or float)) :
+            tagids = OrderedDict([(0,tagids)]);
+        
+        # tag
+        data = OrderedDict([('email',email),('tagids',tagids)]);
+        response = this._http_request('/subscriber/tag', 'POST', data);
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Tagging failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Untag an email. Requires to be logged in.
+        # *
+        # * @param mixed $email The email address of the subscriber.
+        # * @param mixed $tagid The id of the manual tag that will be removed from the subscriber.
+        # *
+        # * @return TRUE on success.
+        # 
+        
+    def untag(this,email, tagid) :
+        if (empty(email) or empty(tagid)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # subscribe
+        data = OrderedDict([('email',email),('tagid',tagid)]);
+        response = this._http_request('/subscriber/untag', 'POST', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Tagging failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Resend an autoresponder for an email address. Requires to be logged in.
+        # *
+        # * @param mixed $email A valid email address
+        # * @param mixed $autoresponder An id of the autoresponder
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def resend(this,email, autoresponder) :
+        if (empty(email) or empty(autoresponder)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # resend/reset autoresponder
+        data = OrderedDict([('email',email),('autoresponder',autoresponder)]);
+        response = this._http_request('/subscriber/resend', 'POST', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Resend failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get all active subscribers. Requires to be logged in.
+        # *
+        # * @return An array of subscriber ids.
+        # 
+        
+    def subscriber_index(this) :
+        response = this._http_request('/subscriber');
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscriber index failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get subscriber information. Requires to be logged in.
+        # *
+        # * @param mixed $subscriberid The subscriber id.
+        # *
+        # * @return An object representing the Klicktipp subscriber.
+        # 
+        
+    def subscriber_get(this,subscriberid) :
+        if (not subscriberid) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # retrieve
+        response = this._http_request('/subscriber/' + urlencode(subscriberid));
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscriber get failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get a subscriber id by email. Requires to be logged in.
+        # *
+        # * @param mixed $email The email address of the subscriber.
+        # *
+        # * @return The id of the subscriber. Use subscriber_get to get subscriber details.
+        # 
+        
+    def subscriber_search(this,email) :
+        if (empty(email)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # search
+        data = OrderedDict([('email',email)]);
+        response = this._http_request('/subscriber/search', 'POST', data);
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscriber search failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Get all active subscribers tagged with the given tag id. Requires to be logged in.
+        # *
+        # * @param mixed $tagid The id of the tag.
+        # *
+        # * @return An array with id -> subscription date of the tagged subscribers. Use subscriber_get to get subscriber details.
+        # 
+        
+    def subscriber_tagged(this,tagid) :
+        if (empty(tagid)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # search
+        data = OrderedDict([('tagid',tagid)]);
+        response = this._http_request('/subscriber/tagged', 'POST', data);
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscriber search failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Updates a subscriber. Requires to be logged in.
+        # *
+        # * @param mixed $subscriberid The id of the subscriber to update.
+        # * @param mixed $fields (optional) The fields of the subscriber to update
+        # * @param mixed $newemail (optional) The new email of the subscriber to update
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def subscriber_update(this,subscriberid, fields = OrderedDict([]), newemail = '', newsmsnumber = '') :
+        if (empty(subscriberid)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # update
+        data = OrderedDict([]);
+        if (not empty(fields)) :
+            data['fields'] = fields;
+        
+        if (not empty(newemail)) :
+            data['newemail'] = newemail;
+        
+        if (not empty(newsmsnumber)) :
+            data['newsmsnumber'] = newsmsnumber;
+        
+        response = this._http_request('/subscriber/' + urlencode(subscriberid), 'PUT', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Subscriber update failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Delete a subscribe. Requires to be logged in.
+        # *
+        # * @param mixed $subscriberid The id of the subscriber to update.
+        # *
+        # * @return TRUE on success.
+        # 
+        
+    def subscriber_delete(this,subscriberid) :
+        if (empty(subscriberid)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # delete
+        response = this._http_request('/subscriber/' + urlencode(subscriberid), 'DELETE');
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Subscriber deletion failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Subscribe an email. Requires an api key.
+        # *
+        # * @param mixed $apikey The api key (listbuildng configuration).
+        # * @param mixed $email The email address of the subscriber.
+        # * @param mixed $fields (optional) Additional fields of the subscriber.
+        # *
+        # * @return A redirection url as defined in the subscription process.
+        # 
+        
+    def signin(this,apikey, email, fields = OrderedDict([]), smsnumber = '') :
+        if (empty(apikey) or empty(email) and empty(smsnumber)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # subscribe
+        data = OrderedDict([('apikey',apikey),('email',email)]);
+        if (not empty(smsnumber)) :
+            data['smsnumber'] = smsnumber;
+        
+        if (not empty(fields)) :
+            data['fields'] = fields;
+        
+        response = this._http_request('/subscriber/signin', 'POST', data);
+        if (empty(response.error)) :
+            return  None if not isset(response.data) else response.data;
+        else : 
+            this.error = 'Subscription failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Untag an email. Requires an api key.
+        # *
+        # * @param mixed $apikey The api key (listbuildng configuration).
+        # * @param mixed $email The email address of the subscriber.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def signout(this,apikey, email) :
+        if (empty(apikey) or empty(email)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # untag
+        data = OrderedDict([('apikey',apikey),('email',email)]);
+        response = this._http_request('/subscriber/signout', 'POST', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Untagging failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Unsubscribe an email. Requires an api key.
+        # *
+        # * @param mixed $apikey The api key (listbuildng configuration).
+        # * @param mixed $email The email address of the subscriber.
+        # *
+        # * @return TRUE on success
+        # 
+        
+    def signoff(this,apikey, email) :
+        if (empty(apikey) or empty(email)) :
+            this.error = 'Illegal Arguments';
+            return FALSE;
+        
+        # unsubscribe
+        data = OrderedDict([('apikey',apikey),('email',email)]);
+        response = this._http_request('/subscriber/signoff', 'POST', data);
+        if (empty(response.error)) :
+            return TRUE;
+        else : 
+            this.error = 'Unsubscription failed: ' + str(response.error);
+            return FALSE;
+        
+    
+    #*
+        # * Helper function.
+        # * Establishes the system connection to the website.
+        # 
+        
+    def _http_request(this,path, method = 'GET', data = None, usesession = TRUE, default_header = OrderedDict([])) :
+        result =  stdClass();
+        # Make sure the socket opened properly.
+        fp = @fsockopen( 'ssl://' + str(this.host) if this.port == 443 else this.host, this.port, errno, errstr, 20);
+        if (not fp) :
+            # When a network error occurs, we use a negative number so it does not
+            # clash with the HTTP status codes.
+            result.code = -errno;
+            result.error = errstr.strip();
+            return result;
+        
+        # Build HTTP request.
+        default_header['Host'] = str('Host' + ': ') + str(this.host);
+        default_header['Referer'] = str(str('Referer' + ': //') + str(_SERVER['SERVER_NAME'])) + str(_SERVER['PHP_SELF']);
+        default_header['Content-Type'] = str('Content-Type' + ': ') + 'application/x-www-form-urlencoded';
+        # Set session cookie if applicable
+        if (usesession and not empty(this.sessionName)) :
+            default_header['Cookie'] = str(str(str('Cookie' + ': ') + str(this.sessionName)) + '=') + str(this.sessionId);
+        
+        # Urlencode data.
+        if (not empty(data)) :
+            data = http_build_query(data, '', '&');
+            # Add content length if applicable.
+            content_length = len(data);
+            if (content_length > 0 or method == 'POST' or method == 'PUT') :
+                default_header['Content-Length'] = 'Content-Length: ' + str(content_length);
+            
+        
+        # get the response as an php object
+        default_header['Accept'] = str('Accept' + ': ') + 'application/vnd.php.serialized';
+        # Write request
+        request = str(str(str(str(method) + ' ') + str(this.path)) + str(path)) + " HTTP/1.0\r\n";
+        request += implode("\r\n", default_header);
+        request += "\r\n\r\n";
+        request +=  '' if empty(data) else data;
+        result.request = request;
+        fwrite(fp, request);
+        # Fetch response.
+        response = '';
+        while (not feof(fp) and (chunk = fread(fp, 1024))) :
+            response += chunk;
+        
+        fp.close();
+        # Parse response.
+        list(split, result.data) = explode("\r\n\r\n", response, 2);
+        result.data =  None if empty(result.data) else unserialize(result.data);
+        split = preg_split("/\r\n|\n|\r/", split);
+        list(protocol, code, status_message) = explode(' ', split.pop(next(iter(split))).strip(), 3);
+        result.protocol = protocol;
+        result.status_message = status_message;
+        result.headers = OrderedDict([]);
+        # Parse headers.
+        while (line = split.pop(next(iter(split))).strip()) :
+            list(header, value) = explode(':', line, 2);
+            if (isset(result.headers[header]) and header == 'Set-Cookie') :
+                # RFC 2109: the Set-Cookie response header comprises the token Set-
+                # Cookie:, followed by a comma-separated list of one or more cookies.
+                result.headers[header] += ',' + value.strip();
+            else : 
+                result.headers[header] = value.strip();
+            
+        
+        responses = OrderedDict([(100,'Continue'),(101,'Switching Protocols'),(200,'OK'),(201,'Created'),(202,'Accepted'),(203,'Non-Authoritative Information'),(204,'No Content'),(205,'Reset Content'),(206,'Partial Content'),(300,'Multiple Choices'),(301,'Moved Permanently'),(302,'Found'),(303,'See Other'),(304,'Not Modified'),(305,'Use Proxy'),(307,'Temporary Redirect'),(400,'Bad Request'),(401,'Unauthorized'),(402,'Payment Required'),(403,'Forbidden'),(404,'Not Found'),(405,'Method Not Allowed'),(406,'Not Acceptable'),(407,'Proxy Authentication Required'),(408,'Request Time-out'),(409,'Conflict'),(410,'Gone'),(411,'Length Required'),(412,'Precondition Failed'),(413,'Request Entity Too Large'),(414,'Request-URI Too Large'),(415,'Unsupported Media Type'),(416,'Requested range not satisfiable'),(417,'Expectation Failed'),(500,'Internal Server Error'),(501,'Not Implemented'),(502,'Bad Gateway'),(503,'Service Unavailable'),(504,'Gateway Time-out'),(505,'HTTP Version not supported')]);
+        # RFC 2616 states that all unknown HTTP codes must be treated the same as the
+        # base code in their class.
+        if (not isset(responses[code])) :
+            code = math.floor(code / 100) * 100;
+        
+        if (code == 200 or code == 304) :
+            pass;
+        elif (code == 301 or code == 302 or code == 307) :
+            # Moved temporarily
+            location = result.headers['Location'];
+            result.redirect_code = code;
+            result.redirect_url = location;
+            result.error = 'Moved. Use ' + str(location);
+        else :
+            result.error = status_message;
+        result.code = code;
+        return result;
+    
+
+#
+#KlicktippPartnerConnector
+#
+#A class using http header authentication for api access.
+#
+#Example: subscribe, update, unsubscribe, delete
+#
+#require ("klicktipp.api.inc"); // this file
+#
+#$developer_key = 'abc';
+#$customer_key = 'cde';
+#
+#$connector = new KlicktippPartnerConnector($username, $developer_key, $customer_key);
+#$subscriber = $connector->subscribe('example@example.com');
+#$result = $connector->subscriber_update($subscriber->id, array('fieldFirstName' => 'John'));
+#$result = $connector->unsubscribe('example@example.com');
+#$result = $connector->subscriber_delete($subscriber->id);
+#
+
+class KlicktippPartnerConnector (KlicktippConnector) :
+    ciphertext = None;
+    username = None;
+    #*
+        # * Instantiates a KlicktippPartnerConnector
+        # * The service URL will be tested: use get_last_error for any errors detected.
+        # *
+        # * @param string $username of your Klick-Tipp account
+        # * @param string $developer_key Developer key from your Klick-Tipp account
+        # * @param string $customer_key Customer key
+        # * @param string $service (optional) Path to the REST server
+        # *
+        # * @return the connector object
+        # 
+        
+    def __init__(this,username, developer_key, customer_key, service = 'https://api.klicktipp.com') :
+        parent.__construct(service);
+        # create hash with developer key
+        hmac = hash_hmac('sha256', customer_key, pack('H*', developer_key), TRUE);
+        this.ciphertext = str(base64.b64encode(str(hmac) + str(customer_key).encode("utf-8")),"utf-8");
+        this.username = username;
+    
+    #*
+        # * login
+        # *
+        # * overrrides KlicktippConnector::login
+        # * there is no login for the partner api access
+        # 
+        
+    def login(this,username, password) :
+        return TRUE;
+    
+    #*
+        # * logout
+        # *
+        # * overrrides KlicktippConnector::logout
+        # * there is no logout for the partner api access
+        # 
+        
+    def logout(this) :
+        return TRUE;
+    
+    #*
+        # * Helper function.
+        # * Establishes the system connection to the website.
+        # 
+        
+    def _http_request(this,path, method = 'GET', data = None, usesession = TRUE, default_header = OrderedDict([])) :
+        default_header['X-Un'] = str('X-Un' + ': ') + str(this.username);
+        default_header['X-Ci'] = str('X-Ci' + ': ') + str(this.ciphertext);
+        return parent._http_request(path, method, data, FALSE, default_header);
+    

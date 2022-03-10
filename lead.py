@@ -4,6 +4,7 @@
 class Lead():
     def __init__(self, lead):
         self.id = lead.get("id")
+        self.salutation = lead.get("salutation")
         self.firstName = lead.get("firstName")
         self.lastName = lead.get("lastName")
         self.dateOfBirth = lead.get("dateOfBirth")
@@ -13,6 +14,7 @@ class Lead():
         self.street = lead.get("street")
         self.postalCode = lead.get("postalCode")
         self.city = lead.get("city")
+        self.state = lead.get("state")
         self.company = lead.get("company")
         self.subject = lead.get("subject")
         self.data = lead.get("data")
@@ -32,13 +34,3 @@ class Lead():
 
     def has_error(self):
         return self.err
-
-
-    # self.leadId = lead["id"]
-    # self.firstName = lead["customer"]["contract"]["firstName"]
-    # self.lastName = lead["customer"]["contract"]["lastName"]
-    # self.phone = lead["customer"]["phone"]
-    # self.email = lead["customer"]["email"]
-    # self.street = lead["customer"]["street"]
-    # self.postalCode = lead["customer"]["postalCode"]
-    # self.city = lead["customer"]["city"]
