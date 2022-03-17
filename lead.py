@@ -1,10 +1,11 @@
 # DONE define Lead with all necessary attributes
 # TODO define function to check if lead already pushed
 # TODO define function to export attributes in a sqllite form
-class Lead():
+class Lead:
     def __init__(self, lead):
         self.id = lead.get("id")
         self.salutation = lead.get("salutation")
+        self.gender = lead.get("gender")
         self.firstName = lead.get("firstName")
         self.lastName = lead.get("lastName")
         self.dateOfBirth = lead.get("dateOfBirth")

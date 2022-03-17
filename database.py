@@ -42,9 +42,10 @@ class Database(object):
         self.connection.commit()
 
     def add_lead(self, lead):
-        query = 'insert into leads (id, salutation, firstName, lastName, dateOfBirth, occupation, phone, email, street, postalCode, city, state, company, subject, data, createdAt) values ("{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}")'.format(
+        query = 'insert into leads (id, salutation, gender, firstName, lastName, dateOfBirth, occupation, phone, email, street, postalCode, city, state, company, subject, data, createdAt) values ("{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}")'.format(
             lead.id,
             lead.salutation,
+            lead.gender,
             lead.firstName,
             lead.lastName,
             lead.dateOfBirth,
@@ -83,14 +84,14 @@ class Database(object):
             self.cur.execute(query)
 
     def get_assfinet(self):
-        query = 'select * from leads where "assfinet" = 0'
+        query = 'select * from leads where "assfinet" = 0 and "err" = "0"'
         with self:
             self.cur.execute(query)
             leads = self.cur.fetchall()
         return leads
 
     def get_klicktipp(self):
-        query = 'select * from leads where "klicktipp" = 0'
+        query = 'select * from leads where "klicktipp" = 0 and "err" = "0"'
         with self:
             self.cur.execute(query)
             leads = self.cur.fetchall()

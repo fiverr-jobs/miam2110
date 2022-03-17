@@ -41,9 +41,10 @@ class Finanzen:
         return json.dumps(json_request)
 
     def format_lead(self, lead):
-        formated_lead = {
+        payload = {
             "id": lead["id"],
             "salutation": lead["customer"]["contact"]["sex"],
+            "gender": lead["customer"]["contact"]["sex"],
             "firstName": lead["customer"]["contact"]["firstName"],
             "lastName": lead["customer"]["contact"]["lastName"],
             "dateOfBirth": lead["customer"]["dateOfBirth"],
@@ -59,20 +60,23 @@ class Finanzen:
             "data": lead["data"],
             "createdAt": lead["createdAt"]["date"],
         }
-        if formated_lead["salutation"] == 1:
-            formated_lead["salutation"] = "Herr"
-        elif formated_lead["salutation"] == 2:
-            formated_lead["salutation"] = "Frau"
-        elif formated_lead["salutation"] == 0:
-            formated_lead["salutation"] = "Divers"
+        if payload["salutation"] == 1:
+            payload["salutation"] = "Herr"
+            payload["gender"] = "Männlich"
+        elif payload["salutation"] == 2:
+            payload["salutation"] = "Frau"
+            payload["gender"] = "Weiblich"
+        elif payload["salutation"] == 0:
+            payload["salutation"] = "Divers"
+            payload["gender"] = "Divers"
         else:
-            formated_lead["salutation"] = "Unbekannt"
+            payload["salutation"] = "Unbekannt"
 
-        formated_lead["data"] = json.loads(
-            json.dumps(formated_lead["data"], ensure_ascii=False).replace("\xa0", " ")
+        payload["data"] = json.loads(
+            json.dumps(payload["data"], ensure_ascii=False).replace("\xa0", " ")
         )
 
-        return formated_lead
+        return payload
 
     def get_leads(self, limit, offset, dateFrom):
 
