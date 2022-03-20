@@ -73,7 +73,7 @@ def klicktipp_push():
     leads_for_klicktipp = db_instance.get_klicktipp()
     for lead in leads_for_klicktipp:
         klicktipp_instance.post_lead(lead)
-        # db_instance.confirm_klicktipp(lead)
+        db_instance.confirm_klicktipp(lead)
         klicktipp_pushed += 1
     print(
         "Pushed {} Leads to Klicktipp with {} errors\n".format(
@@ -117,9 +117,7 @@ def main():
         daily_pull()
         klicktipp_push()
         assfinet_push()
-        print("sleeping for 4 hours ...\n")
-        # time.sleep(21600)
-        time.sleep(5)
-
+        print("sleeping for 3 hours ...\n")
+        time.sleep(10800)
 
 main()

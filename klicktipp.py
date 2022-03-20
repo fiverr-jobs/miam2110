@@ -18,7 +18,7 @@ class Klicktipp:
         self.subscribe_uri = "subscriber.json"
         self.tag_uri = "subscriber/tag.json"
         self.headers = {
-            "content-type": "application/x-www-form-urlencoded",
+            "content-type": "application/json",
             "cache-control": "no-cache",
         }
         self.session_name = ""
@@ -28,7 +28,7 @@ class Klicktipp:
     def login(self):
         payload = {"username": self.username, "password": self.password}
         response = requests.post(
-            urljoin(self.host, self.login_uri), data=payload, headers=self.headers
+            urljoin(self.host, self.login_uri), json=payload, headers=self.headers
         )
         if response.ok:
             response = json.loads(response.text)
@@ -39,7 +39,7 @@ class Klicktipp:
     def logout(self):
         payload = {"username": self.username, "password": self.password}
         response = requests.post(
-            urljoin(self.host, self.logout_uri), data=payload, headers=self.headers
+            urljoin(self.host, self.logout_uri), json=payload, headers=self.headers
         )
         if response.ok:
             return True
@@ -71,7 +71,6 @@ class Klicktipp:
         for tag in variable_tag_list:
             if lead.subject.lower().find(tag) >= 0:
                 tags.append(variable_tag_list[tag])
-
         payload = {"email": lead.email, "tagids": tags}
         return payload
 
@@ -104,21 +103,21 @@ class Klicktipp:
 
     def post_tags(self, lead):
         payload = self.format_lead_tags(lead)
-        # response = requests.post(
-        #     urljoin(self.host, self.tag_uri), data=payload, headers=self.headers
-        # )
-        # if response.ok:
-        #     return response
-        # else:
-        #     raise Exception("Klicktipp Request Error")
+        response = requests.post(
+            urljoin(self.host, self.tag_uri), json=payload, headers=self.headers
+        )
+        if response.ok:
+            return response
+        else:
+            raise Exception("Klicktipp Request Error")
 
     def post_lead(self, lead):
         payload = self.format_lead(lead)
-        self.post_tags(lead)
-        # response = requests.post(
-        #     urljoin(self.host, self.subscriber_uri), data=payload, headers=self.headers
-        # )
-        # if response.ok:
-        #     return response
-        # else:
-        #     raise Exception("Klicktipp Request Error")
+        response = requests.post(
+            urljoin(self.host, self.subscribe_uri), json=payload, headers=self.headers
+        )
+        if response.ok:
+            self.post_tags(lead)
+            return response
+        else:
+            raise Exception("Klicktipp Request Error")
