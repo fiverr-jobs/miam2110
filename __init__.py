@@ -1,3 +1,6 @@
+import sys
+sys.stdout.flush()
+
 from database import Database
 from finanzen import Finanzen
 

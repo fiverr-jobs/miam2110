@@ -57,7 +57,8 @@ class Klicktipp:
     def format_lead_tags(self, lead):
         finanzen_de_tag = "8466566"
         variable_tag_list = {
-            "gebäude,wohn": "8470942",
+            "gebäude": "8470942",
+            "sachversicherungen (whg)": "8470942",
             "hund": "8472359",
             "katze": "8472360",
             "pferd": "8472361",
